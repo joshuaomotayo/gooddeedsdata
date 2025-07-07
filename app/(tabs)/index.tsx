@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
 import ConnectionCard from '@/components/ConnectionCard';
 import UsageCard from '@/components/UsageCard';
 import WalletCard from '@/components/WalletCard';
@@ -8,8 +10,29 @@ import { mockVPNConnection, mockWalletBalance, mockUsageRecords } from '@/lib/mo
 import { VPNConnection } from '@/types';
 
 export default function HomeScreen() {
+  const { user, loading } = useAuth();
   const [connection, setConnection] = useState<VPNConnection>(mockVPNConnection);
   const [walletBalance] = useState(mockWalletBalance);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, loading]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   // Calculate today's usage
   const today = new Date().toDateString();
@@ -103,6 +126,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontFamily: 'Inter-Regular',
   },
   header: {
     padding: 20,

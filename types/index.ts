@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  name: string;
+  name?: string;
   phone?: string;
   createdAt: string;
 }
@@ -54,4 +54,14 @@ export interface UserStats {
   totalSpent: number; // in Naira
   sessionsCount: number;
   averageSessionDuration: number; // in minutes
+}
+
+export interface VPNStatus {
+  connected: boolean;
+  server_ip?: string;
+  server_location?: string;
+  connection_time?: number;
+  data_used_session: number;
+  upload_speed?: number;
+  download_speed?: number;
 }

@@ -1,10 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
 import { User, Settings, CircleHelp as HelpCircle, Shield, Bell, LogOut, ChevronRight, Mail, Phone, Calendar } from 'lucide-react-native';
-import { mockUser } from '@/lib/mockData';
 
 export default function ProfileScreen() {
+  const { user, signOut } = useAuth();
+
   const handleEditProfile = () => {
     Alert.alert('Edit Profile', 'Profile editing feature coming soon!');
   };
@@ -31,8 +34,13 @@ export default function ProfileScreen() {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: () => {
-          Alert.alert('Logged Out', 'You have been logged out successfully.');
+        { text: 'Logout', style: 'destructive', onPress: async () => {
+          try {
+            await signOut();
+            router.replace('/auth/login');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to logout');
+          }
         }}
       ]
     );
@@ -97,25 +105,18 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{mockUser.name}</Text>
+            <Text style={styles.userName}>{user?.email || 'User'}</Text>
             
             <View style={styles.contactInfo}>
               <View style={styles.contactItem}>
                 <Mail size={16} color="#6B7280" strokeWidth={2} />
-                <Text style={styles.contactText}>{mockUser.email}</Text>
+                <Text style={styles.contactText}>{user?.email}</Text>
               </View>
-              
-              {mockUser.phone && (
-                <View style={styles.contactItem}>
-                  <Phone size={16} color="#6B7280" strokeWidth={2} />
-                  <Text style={styles.contactText}>{mockUser.phone}</Text>
-                </View>
-              )}
               
               <View style={styles.contactItem}>
                 <Calendar size={16} color="#6B7280" strokeWidth={2} />
                 <Text style={styles.contactText}>
-                  Member since {formatDate(mockUser.createdAt)}
+                  Member since {user?.created_at ? formatDate(user.created_at) : 'Recently'}
                 </Text>
               </View>
             </View>
