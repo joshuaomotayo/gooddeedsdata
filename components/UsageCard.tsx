@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BarChart3, TrendingUp, Database } from 'lucide-react-native';
+import { ChartBar as BarChart3, TrendingUp, Database } from 'lucide-react-native';
 
 interface UsageCardProps {
   todayUsage: number;
