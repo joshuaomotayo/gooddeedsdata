@@ -20,6 +20,23 @@ export default function HomeScreen() {
     }
   }, [user, loading]);
 
+  // Simulate real-time updates when connected
+  useEffect(() => {
+    if (!connection.isConnected) return;
+
+    const interval = setInterval(() => {
+      setConnection(prev => ({
+        ...prev,
+        speed: {
+          download: 20 + Math.random() * 15,
+          upload: 8 + Math.random() * 10,
+        },
+      }));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [connection.isConnected]);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -69,23 +86,6 @@ export default function HomeScreen() {
   const handleTopUp = () => {
     Alert.alert('Top Up Wallet', 'Redirecting to payment options...');
   };
-
-  // Simulate real-time updates when connected
-  useEffect(() => {
-    if (!connection.isConnected) return;
-
-    const interval = setInterval(() => {
-      setConnection(prev => ({
-        ...prev,
-        speed: {
-          download: 20 + Math.random() * 15,
-          upload: 8 + Math.random() * 10,
-        },
-      }));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [connection.isConnected]);
 
   return (
     <SafeAreaView style={styles.container}>
