@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Share, Users, Gift, Copy } from 'lucide-react-native';
 import { ReferralData } from '@/types';
-import * as Sharing from 'react-native-share';
 import { Platform } from 'react-native';
 
 interface ReferralCardProps {
@@ -31,8 +30,9 @@ export default function ReferralCard({ referralData, onUseEarnings }: ReferralCa
           Alert.alert('Copied!', 'Referral message copied to clipboard');
         }
       } else {
-        // Mobile sharing
-        await Sharing.open({
+        // Mobile sharing - use React Native's Share API
+        const { Share: RNShare } = require('react-native');
+        await RNShare.share({
           message: shareMessage,
           title: 'Join GoodDeeds Data',
         });
@@ -47,11 +47,13 @@ export default function ReferralCard({ referralData, onUseEarnings }: ReferralCa
     try {
       if (Platform.OS === 'web') {
         await navigator.clipboard.writeText(referralData.code);
+        Alert.alert('Copied!', `Referral code ${referralData.code} copied to clipboard`);
       } else {
-        // For mobile, you'd use a clipboard library
-        // For now, we'll just show the alert
+        // For mobile, use Expo Clipboard
+        const { setStringAsync } = require('expo-clipboard');
+        await setStringAsync(referralData.code);
+        Alert.alert('Copied!', `Referral code ${referralData.code} copied to clipboard`);
       }
-      Alert.alert('Copied!', `Referral code ${referralData.code} copied to clipboard`);
     } catch (error) {
       Alert.alert('Error', 'Failed to copy referral code');
     } finally {
