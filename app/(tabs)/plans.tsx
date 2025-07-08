@@ -2,39 +2,51 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PlanCard from '@/components/PlanCard';
+import PaystackPayment from '@/components/PaystackPayment';
 import { mockDataPlans } from '@/lib/mockData';
 import { DataPlan } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PlansScreen() {
+  const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<DataPlan | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
 
   const handleSelectPlan = (plan: DataPlan) => {
     setSelectedPlan(plan);
     
     if (plan.type === 'free') {
       Alert.alert(
-        'Free Plan Selected',
-        'You are now on the Free Daily plan with 100MB daily limit.',
+        'Free Plan',
+        'Free plan is only available for new users for the first 30 days. You can switch to this plan from your home screen if eligible.',
+        [{ text: 'OK' }]
+      );
+    } else if (plan.type === 'payg') {
+      Alert.alert(
+        'Pay As You Go',
+        'Switch to Pay As You Go mode from your home screen. Data will be charged at ₦0.20 per MB from your wallet balance.',
         [{ text: 'OK' }]
       );
     } else {
       Alert.alert(
-        'Plan Selected',
-        `You selected ${plan.name}. Proceed to payment?`,
+        'Purchase Data Bundle',
+        `Purchase ${plan.name} for ₦${plan.price}?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Pay Now', onPress: () => handlePayment(plan) }
+          { text: 'Buy Now', onPress: () => setShowPayment(true) }
         ]
       );
     }
   };
 
-  const handlePayment = (plan: DataPlan) => {
-    Alert.alert(
-      'Payment',
-      `Processing payment of ₦${plan.price} for ${plan.name}...`,
-      [{ text: 'OK' }]
-    );
+  const handlePaymentSuccess = (amount: number, reference: string) => {
+    if (selectedPlan) {
+      Alert.alert(
+        'Purchase Successful!',
+        `${selectedPlan.name} has been activated. You now have ${(selectedPlan.dataAmount / 1024).toFixed(1)}GB of data.`,
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   return (
@@ -64,11 +76,21 @@ export default function PlansScreen() {
             <Text style={styles.infoItem}>• High-speed cloud-powered internet</Text>
             <Text style={styles.infoItem}>• Secure VPN connection</Text>
             <Text style={styles.infoItem}>• Real-time usage monitoring</Text>
-            <Text style={styles.infoItem}>• Flexible payment options</Text>
+            <Text style={styles.infoItem}>• Flexible payment options with Paystack</Text>
+            <Text style={styles.infoItem}>• Referral rewards program</Text>
+            <Text style={styles.infoItem}>• Switchable plans anytime</Text>
             <Text style={styles.infoItem}>• 24/7 customer support</Text>
           </View>
         </View>
       </ScrollView>
+
+      <PaystackPayment
+        visible={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSuccess={handlePaymentSuccess}
+        userEmail={user?.email || ''}
+        presetAmount={selectedPlan?.price}
+      />
     </SafeAreaView>
   );
 }

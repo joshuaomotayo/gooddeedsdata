@@ -1,23 +1,41 @@
-import { DataPlan, UsageRecord, WalletTransaction, VPNConnection, UserStats, User } from '@/types';
+import { DataPlan, UsageRecord, WalletTransaction, VPNConnection, UserStats, User, UserPlan, ReferralData } from '@/types';
 
 export const mockUser: User = {
   id: '1',
   email: 'john.doe@example.com',
   name: 'John Doe',
   phone: '+234 801 234 5678',
-  createdAt: '2024-01-15T10:30:00Z',
+  created_at: '2024-01-15T10:30:00Z',
+  referral_code: 'JOHN2024',
+  referral_earnings: 125.50,
+};
+
+export const mockUserPlan: UserPlan = {
+  id: '1',
+  userId: '1',
+  planType: 'free',
+  dataBalance: 2048, // 2GB remaining from 3GB free plan
+  expiryDate: '2025-01-20T00:00:00Z', // 30 days from signup
+  isActive: true,
+};
+
+export const mockReferralData: ReferralData = {
+  code: 'JOHN2024',
+  totalReferrals: 12,
+  totalEarnings: 125.50,
+  pendingEarnings: 25.00,
 };
 
 export const mockDataPlans: DataPlan[] = [
   {
     id: 'free',
-    name: 'Free Daily',
+    name: 'Free Starter',
     type: 'free',
-    dataAmount: 100,
+    dataAmount: 3072, // 3GB
     price: 0,
-    validity: 1,
-    description: 'Perfect for light browsing and staying connected',
-    features: ['100MB daily limit', 'Basic speed', 'Standard support'],
+    validity: 30,
+    description: 'Perfect for getting started - 3GB free for 30 days',
+    features: ['3GB data for 30 days', 'Basic speed', 'Standard support', 'One-time offer'],
   },
   {
     id: 'payg',
@@ -26,7 +44,7 @@ export const mockDataPlans: DataPlan[] = [
     dataAmount: 0,
     price: 0.2,
     validity: 30,
-    description: 'Flexible usage with per-MB billing',
+    description: 'Flexible usage with per-MB billing from wallet balance',
     features: ['₦0.20 per MB', 'No daily limits', 'High-speed connection', 'Priority support'],
     popular: true,
   },
@@ -49,6 +67,16 @@ export const mockDataPlans: DataPlan[] = [
     validity: 30,
     description: 'Perfect for heavy users and streaming',
     features: ['5GB data', '30 days validity', 'Ultra-high speed', 'Premium support'],
+  },
+  {
+    id: 'bundle-10gb',
+    name: '10GB Bundle',
+    type: 'bundle',
+    dataAmount: 10240,
+    price: 1200,
+    validity: 30,
+    description: 'Ultimate data package for power users',
+    features: ['10GB data', '30 days validity', 'Ultra-high speed', 'Premium support', 'Priority network'],
   },
 ];
 
@@ -101,16 +129,17 @@ export const mockWalletTransactions: WalletTransaction[] = [
     userId: '1',
     type: 'credit',
     amount: 500,
-    description: 'Wallet top-up via bank transfer',
+    description: 'Wallet top-up via Paystack',
     timestamp: '2024-12-20T09:00:00Z',
     status: 'completed',
+    reference: 'gdd_1703059200000_123456',
   },
   {
     id: '2',
     userId: '1',
     type: 'debit',
     amount: 31.92,
-    description: 'Data usage charges',
+    description: 'Data usage charges (PAYG)',
     timestamp: '2024-12-20T14:35:00Z',
     status: 'completed',
   },
@@ -118,8 +147,8 @@ export const mockWalletTransactions: WalletTransaction[] = [
     id: '3',
     userId: '1',
     type: 'credit',
-    amount: 200,
-    description: 'Wallet top-up via card',
+    amount: 25.00,
+    description: 'Referral earnings from @jane_doe',
     timestamp: '2024-12-19T15:20:00Z',
     status: 'completed',
   },

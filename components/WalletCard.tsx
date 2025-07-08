@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Wallet, Plus, ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
+import { Wallet, Plus, Zap, Users } from 'lucide-react-native';
 
 interface WalletCardProps {
   balance: number;
   onTopUp: () => void;
+  onBuyData: () => void;
+  onRefer: () => void;
 }
 
-export default function WalletCard({ balance, onTopUp }: WalletCardProps) {
+export default function WalletCard({ balance, onTopUp, onBuyData, onRefer }: WalletCardProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -27,23 +29,23 @@ export default function WalletCard({ balance, onTopUp }: WalletCardProps) {
       </View>
 
       <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={[styles.actionIcon, { backgroundColor: '#EFF6FF' }]}>
-            <ArrowUpRight size={16} color="#2563EB" strokeWidth={2} />
+        <TouchableOpacity style={styles.actionButton} onPress={onRefer}>
+          <View style={[styles.actionIcon, { backgroundColor: '#F3E8FF' }]}>
+            <Users size={16} color="#7C3AED" strokeWidth={2} />
           </View>
-          <Text style={styles.actionText}>Send</Text>
+          <Text style={styles.actionText}>Refer</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={[styles.actionIcon, { backgroundColor: '#F0FDF4' }]}>
-            <ArrowDownLeft size={16} color="#059669" strokeWidth={2} />
-          </View>
-          <Text style={styles.actionText}>Receive</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={onBuyData}>
           <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
-            <Plus size={16} color="#F59E0B" strokeWidth={2} />
+            <Zap size={16} color="#F59E0B" strokeWidth={2} />
           </View>
           <Text style={styles.actionText}>Buy Data</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={onTopUp}>
+          <View style={[styles.actionIcon, { backgroundColor: '#EFF6FF' }]}>
+            <Plus size={16} color="#2563EB" strokeWidth={2} />
+          </View>
+          <Text style={styles.actionText}>Top Up</Text>
         </TouchableOpacity>
       </View>
     </View>

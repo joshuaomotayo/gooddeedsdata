@@ -3,7 +3,10 @@ export interface User {
   email: string;
   name?: string;
   phone?: string;
-  createdAt: string;
+  created_at: string;
+  referral_code?: string;
+  referred_by?: string;
+  referral_earnings?: number;
 }
 
 export interface DataPlan {
@@ -35,6 +38,7 @@ export interface WalletTransaction {
   description: string;
   timestamp: string;
   status: 'pending' | 'completed' | 'failed';
+  reference?: string;
 }
 
 export interface VPNConnection {
@@ -64,4 +68,34 @@ export interface VPNStatus {
   data_used_session: number;
   upload_speed?: number;
   download_speed?: number;
+}
+
+export interface UserPlan {
+  id: string;
+  userId: string;
+  planType: 'free' | 'payg' | 'bundle';
+  currentPlan?: DataPlan;
+  dataBalance: number; // in MB
+  expiryDate?: string;
+  isActive: boolean;
+  pausedData?: number; // paused data when switching to PAYG
+}
+
+export interface ReferralData {
+  code: string;
+  totalReferrals: number;
+  totalEarnings: number;
+  pendingEarnings: number;
+}
+
+export interface PaystackResponse {
+  status: boolean;
+  message: string;
+  data: {
+    reference: string;
+    trans: string;
+    status: string;
+    transaction: string;
+    trxref: string;
+  };
 }

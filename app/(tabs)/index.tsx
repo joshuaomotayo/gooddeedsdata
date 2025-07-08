@@ -6,13 +6,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import ConnectionCard from '@/components/ConnectionCard';
 import UsageCard from '@/components/UsageCard';
 import WalletCard from '@/components/WalletCard';
-import { mockVPNConnection, mockWalletBalance, mockUsageRecords } from '@/lib/mockData';
-import { VPNConnection } from '@/types';
+import PlanSwitcher from '@/components/PlanSwitcher';
+import ReferralCard from '@/components/ReferralCard';
+import PaystackPayment from '@/components/PaystackPayment';
+import { 
+  mockVPNConnection, 
+  mockWalletBalance, 
+  mockUsageRecords, 
+  mockUserPlan,
+  mockReferralData 
+} from '@/lib/mockData';
+import { VPNConnection, UserPlan, ReferralData } from '@/types';
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
   const [connection, setConnection] = useState<VPNConnection>(mockVPNConnection);
-  const [walletBalance] = useState(mockWalletBalance);
+  const [walletBalance, setWalletBalance] = useState(mockWalletBalance);
+  const [userPlan, setUserPlan] = useState<UserPlan>(mockUserPlan);
+  const [referralData, setReferralData] = useState<ReferralData>(mockReferralData);
+  const [showPayment, setShowPayment] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -72,6 +85,17 @@ export default function HomeScreen() {
       }));
       Alert.alert('Disconnected', 'You have been disconnected from GoodDeeds Data network.');
     } else {
+      // Check if user has data or balance
+      if (userPlan.planType === 'payg' && walletBalance < 1) {
+        Alert.alert('Insufficient Balance', 'Please top up your wallet to use Pay As You Go.');
+        return;
+      }
+      
+      if (userPlan.planType !== 'payg' && userPlan.dataBalance <= 0) {
+        Alert.alert('No Data', 'Please buy a data bundle or switch to Pay As You Go.');
+        return;
+      }
+
       // Connect
       setConnection(prev => ({
         ...prev,
@@ -83,8 +107,88 @@ export default function HomeScreen() {
     }
   };
 
-  const handleTopUp = () => {
-    Alert.alert('Top Up Wallet', 'Redirecting to payment options...');
+  const handlePlanChange = (planType: 'free' | 'payg' | 'bundle') => {
+    if (planType === userPlan.planType) return;
+
+    if (planType === 'free' && userPlan.planType !== 'free') {
+      Alert.alert(
+        'Cannot Switch to Free Plan',
+        'Free plan is only available for new users for the first 30 days.'
+      );
+      return;
+    }
+
+    if (planType === 'payg') {
+      // Pause current data if switching from bundle
+      if (userPlan.planType === 'bundle' && userPlan.dataBalance > 0) {
+        setUserPlan(prev => ({
+          ...prev,
+          planType: 'payg',
+          pausedData: prev.dataBalance,
+          dataBalance: 0,
+        }));
+        Alert.alert(
+          'Switched to Pay As You Go',
+          `Your ${(userPlan.dataBalance / 1024).toFixed(1)}GB data has been paused. You can switch back anytime to continue using it.`
+        );
+      } else {
+        setUserPlan(prev => ({ ...prev, planType: 'payg' }));
+        Alert.alert('Switched to Pay As You Go', 'Data usage will now be charged from your wallet balance.');
+      }
+    } else if (planType === 'bundle') {
+      // Restore paused data if available
+      if (userPlan.pausedData && userPlan.pausedData > 0) {
+        setUserPlan(prev => ({
+          ...prev,
+          planType: 'bundle',
+          dataBalance: prev.pausedData || 0,
+          pausedData: 0,
+        }));
+        Alert.alert(
+          'Switched to Data Bundle',
+          `Your paused ${((userPlan.pausedData || 0) / 1024).toFixed(1)}GB data has been restored.`
+        );
+      } else {
+        setUserPlan(prev => ({ ...prev, planType: 'bundle' }));
+        router.push('/(tabs)/plans');
+      }
+    }
+  };
+
+  const handlePaymentSuccess = (amount: number, reference: string) => {
+    setWalletBalance(prev => prev + amount);
+    
+    // Add 2% to referrer if user was referred
+    if (user.referred_by) {
+      const referralEarning = amount * 0.02;
+      setReferralData(prev => ({
+        ...prev,
+        pendingEarnings: prev.pendingEarnings + referralEarning,
+        totalEarnings: prev.totalEarnings + referralEarning,
+      }));
+    }
+  };
+
+  const handleUseReferralEarnings = () => {
+    if (referralData.pendingEarnings > 0) {
+      setWalletBalance(prev => prev + referralData.pendingEarnings);
+      setReferralData(prev => ({
+        ...prev,
+        pendingEarnings: 0,
+      }));
+      Alert.alert(
+        'Earnings Added!',
+        `₦${referralData.pendingEarnings.toFixed(2)} has been added to your wallet balance.`
+      );
+    }
+  };
+
+  const handleBuyData = () => {
+    router.push('/(tabs)/plans');
+  };
+
+  const handleRefer = () => {
+    setShowReferral(!showReferral);
   };
 
   return (
@@ -95,6 +199,11 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Stay connected with GoodDeeds Data</Text>
         </View>
 
+        <PlanSwitcher 
+          currentPlan={userPlan}
+          onPlanChange={handlePlanChange}
+        />
+
         <ConnectionCard 
           connection={connection} 
           onToggleConnection={handleToggleConnection}
@@ -103,14 +212,25 @@ export default function HomeScreen() {
         <UsageCard
           todayUsage={todayUsage}
           totalUsage={totalUsage}
-          dailyLimit={100} // Free plan daily limit
+          dailyLimit={userPlan.planType === 'free' ? 100 : undefined}
           cost={totalCost}
+          dataBalance={userPlan.dataBalance}
+          planType={userPlan.planType}
         />
 
         <WalletCard
           balance={walletBalance}
-          onTopUp={handleTopUp}
+          onTopUp={() => setShowPayment(true)}
+          onBuyData={handleBuyData}
+          onRefer={handleRefer}
         />
+
+        {showReferral && (
+          <ReferralCard
+            referralData={referralData}
+            onUseEarnings={handleUseReferralEarnings}
+          />
+        )}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -118,6 +238,13 @@ export default function HomeScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <PaystackPayment
+        visible={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSuccess={handlePaymentSuccess}
+        userEmail={user.email || ''}
+      />
     </SafeAreaView>
   );
 }

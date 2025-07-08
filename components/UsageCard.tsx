@@ -1,15 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BarChart3, TrendingUp, Clock } from 'lucide-react-native';
+import { BarChart3, TrendingUp, Database } from 'lucide-react-native';
 
 interface UsageCardProps {
   todayUsage: number;
   totalUsage: number;
   dailyLimit?: number;
   cost: number;
+  dataBalance: number;
+  planType: 'free' | 'payg' | 'bundle';
 }
 
-export default function UsageCard({ todayUsage, totalUsage, dailyLimit, cost }: UsageCardProps) {
+export default function UsageCard({ 
+  todayUsage, 
+  totalUsage, 
+  dailyLimit, 
+  cost, 
+  dataBalance,
+  planType 
+}: UsageCardProps) {
   const formatDataSize = (mb: number) => {
     if (mb >= 1024) {
       return `${(mb / 1024).toFixed(1)} GB`;
@@ -19,12 +28,50 @@ export default function UsageCard({ todayUsage, totalUsage, dailyLimit, cost }: 
 
   const usagePercentage = dailyLimit ? (todayUsage / dailyLimit) * 100 : 0;
 
+  const getPlanStatusText = () => {
+    switch (planType) {
+      case 'free':
+        return 'Free Plan Active';
+      case 'payg':
+        return 'Pay As You Go';
+      case 'bundle':
+        return 'Data Bundle Active';
+      default:
+        return '';
+    }
+  };
+
+  const getPlanStatusColor = () => {
+    switch (planType) {
+      case 'free':
+        return '#059669';
+      case 'payg':
+        return '#2563EB';
+      case 'bundle':
+        return '#7C3AED';
+      default:
+        return '#6B7280';
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <BarChart3 size={24} color="#2563EB" strokeWidth={2} />
         <Text style={styles.title}>Data Usage</Text>
+        <View style={[styles.planBadge, { backgroundColor: getPlanStatusColor() }]}>
+          <Text style={styles.planBadgeText}>{getPlanStatusText()}</Text>
+        </View>
       </View>
+
+      {planType !== 'payg' && dataBalance > 0 && (
+        <View style={styles.dataBalanceContainer}>
+          <Database size={20} color="#7C3AED" strokeWidth={2} />
+          <Text style={styles.dataBalanceText}>
+            {formatDataSize(dataBalance)} remaining
+          </Text>
+        </View>
+      )}
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
@@ -43,10 +90,10 @@ export default function UsageCard({ todayUsage, totalUsage, dailyLimit, cost }: 
         </View>
       </View>
 
-      {dailyLimit && (
+      {dailyLimit && planType === 'free' && (
         <View style={styles.progressContainer}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressLabel}>Daily Limit</Text>
+            <Text style={styles.progressLabel}>Daily Limit (Free Plan)</Text>
             <Text style={styles.progressText}>
               {formatDataSize(todayUsage)} / {formatDataSize(dailyLimit)}
             </Text>
@@ -99,6 +146,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
+    fontFamily: 'Inter-SemiBold',
+    flex: 1,
+  },
+  planBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  planBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  dataBalanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F3E8FF',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  dataBalanceText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C3AED',
     fontFamily: 'Inter-SemiBold',
   },
   statsContainer: {
@@ -175,5 +249,3 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
   },
 });
-
-export default UsageCard

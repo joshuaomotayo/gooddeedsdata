@@ -1,15 +1,24 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Settings, CircleHelp as HelpCircle, Shield, Bell, LogOut, ChevronRight, Mail, Phone, Calendar } from 'lucide-react-native';
+import { User, Settings, CircleHelp as HelpCircle, Shield, Bell, LogOut, ChevronRight, Mail, Phone, Calendar, Edit3, X } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editedName, setEditedName] = useState(user?.name || '');
+  const [editedPhone, setEditedPhone] = useState('');
 
   const handleEditProfile = () => {
-    Alert.alert('Edit Profile', 'Profile editing feature coming soon!');
+    setShowEditProfile(true);
+  };
+
+  const handleSaveProfile = () => {
+    // In a real app, this would update the user profile via API
+    Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
+    setShowEditProfile(false);
   };
 
   const handleSettings = () => {
@@ -17,15 +26,24 @@ export default function ProfileScreen() {
   };
 
   const handleHelp = () => {
-    Alert.alert('Help & Support', 'Contact support at support@gooddeeds.com');
+    Alert.alert(
+      'Help & Support',
+      'Need help? Contact us:\n\n📧 support@gooddeeds.com\n📱 +234 800 GOODDEEDS\n💬 Live chat available 24/7'
+    );
   };
 
   const handlePrivacy = () => {
-    Alert.alert('Privacy & Security', 'Privacy settings coming soon!');
+    Alert.alert(
+      'Privacy & Security',
+      'Your data is protected with:\n\n• End-to-end encryption\n• Secure payment processing\n• No data logging policy\n• GDPR compliance'
+    );
   };
 
   const handleNotifications = () => {
-    Alert.alert('Notifications', 'Notification settings coming soon!');
+    Alert.alert(
+      'Notifications',
+      'Manage your notifications:\n\n• Data usage alerts\n• Payment confirmations\n• Referral earnings\n• System updates'
+    );
   };
 
   const handleLogout = () => {
@@ -100,18 +118,26 @@ export default function ProfileScreen() {
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+              <Edit3 size={12} color="#FFFFFF" strokeWidth={2} />
               <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
           </View>
           
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{user?.email || 'User'}</Text>
+            <Text style={styles.userName}>{user?.name || user?.email || 'User'}</Text>
             
             <View style={styles.contactInfo}>
               <View style={styles.contactItem}>
                 <Mail size={16} color="#6B7280" strokeWidth={2} />
                 <Text style={styles.contactText}>{user?.email}</Text>
               </View>
+              
+              {user?.phone && (
+                <View style={styles.contactItem}>
+                  <Phone size={16} color="#6B7280" strokeWidth={2} />
+                  <Text style={styles.contactText}>{user.phone}</Text>
+                </View>
+              )}
               
               <View style={styles.contactItem}>
                 <Calendar size={16} color="#6B7280" strokeWidth={2} />
@@ -172,6 +198,45 @@ export default function ProfileScreen() {
           <Text style={styles.footerText}>© 2024 GoodDeeds Technologies</Text>
         </View>
       </ScrollView>
+
+      {/* Edit Profile Modal */}
+      <Modal visible={showEditProfile} animationType="slide" presentationStyle="pageSheet">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Profile</Text>
+            <TouchableOpacity onPress={() => setShowEditProfile(false)}>
+              <X size={24} color="#6B7280" strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                value={editedName}
+                onChangeText={setEditedName}
+                placeholder="Enter your full name"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput
+                style={styles.input}
+                value={editedPhone}
+                onChangeText={setEditedPhone}
+                placeholder="Enter your phone number"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -221,8 +286,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#2563EB',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
@@ -365,5 +433,62 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     fontFamily: 'Inter-Regular',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    fontFamily: 'Inter-Bold',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#111827',
+    fontFamily: 'Inter-Regular',
+  },
+  saveButton: {
+    backgroundColor: '#2563EB',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
   },
 });

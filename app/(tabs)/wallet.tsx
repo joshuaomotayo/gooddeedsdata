@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Wallet, Plus, ArrowUpRight, ArrowDownLeft, CreditCard, Smartphone, Building } from 'lucide-react-native';
 import { mockWalletBalance, mockWalletTransactions } from '@/lib/mockData';
 import { WalletTransaction } from '@/types';
+import PaystackPayment from '@/components/PaystackPayment';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function WalletScreen() {
+  const { user } = useAuth();
+  const [walletBalance, setWalletBalance] = useState(mockWalletBalance);
+  const [showPayment, setShowPayment] = useState(false);
+  const [presetAmount, setPresetAmount] = useState<number | undefined>();
   const topUpAmounts = [100, 200, 500, 1000, 2000, 5000];
 
   const formatTime = (timestamp: string) => {
@@ -18,34 +24,24 @@ export default function WalletScreen() {
     });
   };
 
-  const handleTopUp = (amount: number) => {
+  const handleTopUp = (amount?: number) => {
+    setPresetAmount(amount);
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = (amount: number, reference: string) => {
+    setWalletBalance(prev => prev + amount);
     Alert.alert(
-      'Top Up Wallet',
-      `Add ₦${amount} to your wallet?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Continue', onPress: () => handlePaymentMethod(amount) }
-      ]
+      'Payment Successful!',
+      `₦${amount.toFixed(2)} has been added to your wallet.`,
+      [{ text: 'OK' }]
     );
   };
 
-  const handlePaymentMethod = (amount: number) => {
+  const handlePaymentMethod = (method: string) => {
     Alert.alert(
       'Payment Method',
-      'Choose your preferred payment method:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Bank Transfer', onPress: () => processPayment(amount, 'Bank Transfer') },
-        { text: 'Card Payment', onPress: () => processPayment(amount, 'Card Payment') },
-        { text: 'USSD', onPress: () => processPayment(amount, 'USSD') }
-      ]
-    );
-  };
-
-  const processPayment = (amount: number, method: string) => {
-    Alert.alert(
-      'Payment Processing',
-      `Processing ₦${amount} payment via ${method}...`,
+      `You selected ${method}. This will redirect to Paystack for secure payment.`,
       [{ text: 'OK' }]
     );
   };
@@ -62,6 +58,9 @@ export default function WalletScreen() {
       <View style={styles.transactionDetails}>
         <Text style={styles.transactionDescription}>{item.description}</Text>
         <Text style={styles.transactionTime}>{formatTime(item.timestamp)}</Text>
+        {item.reference && (
+          <Text style={styles.transactionReference}>Ref: {item.reference}</Text>
+        )}
       </View>
       <Text style={[
         styles.transactionAmount,
@@ -90,8 +89,15 @@ export default function WalletScreen() {
           </View>
           <View style={styles.balanceAmount}>
             <Text style={styles.currency}>₦</Text>
-            <Text style={styles.balance}>{mockWalletBalance.toFixed(2)}</Text>
+            <Text style={styles.balance}>{walletBalance.toFixed(2)}</Text>
           </View>
+          <TouchableOpacity 
+            style={styles.customTopUpButton}
+            onPress={() => handleTopUp()}
+          >
+            <Plus size={20} color="#FFFFFF" strokeWidth={2} />
+            <Text style={styles.customTopUpText}>Custom Amount</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Top-up */}
@@ -114,15 +120,24 @@ export default function WalletScreen() {
         <View style={styles.paymentMethodsContainer}>
           <Text style={styles.sectionTitle}>Payment Methods</Text>
           <View style={styles.paymentMethods}>
-            <TouchableOpacity style={styles.paymentMethod}>
+            <TouchableOpacity 
+              style={styles.paymentMethod}
+              onPress={() => handlePaymentMethod('Card Payment')}
+            >
               <CreditCard size={20} color="#2563EB" strokeWidth={2} />
               <Text style={styles.paymentMethodText}>Card Payment</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.paymentMethod}>
+            <TouchableOpacity 
+              style={styles.paymentMethod}
+              onPress={() => handlePaymentMethod('Bank Transfer')}
+            >
               <Building size={20} color="#059669" strokeWidth={2} />
               <Text style={styles.paymentMethodText}>Bank Transfer</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.paymentMethod}>
+            <TouchableOpacity 
+              style={styles.paymentMethod}
+              onPress={() => handlePaymentMethod('USSD')}
+            >
               <Smartphone size={20} color="#7C3AED" strokeWidth={2} />
               <Text style={styles.paymentMethodText}>USSD</Text>
             </TouchableOpacity>
@@ -141,6 +156,14 @@ export default function WalletScreen() {
           />
         </View>
       </ScrollView>
+
+      <PaystackPayment
+        visible={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSuccess={handlePaymentSuccess}
+        userEmail={user?.email || ''}
+        presetAmount={presetAmount}
+      />
     </SafeAreaView>
   );
 }
@@ -193,6 +216,7 @@ const styles = StyleSheet.create({
   balanceAmount: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    marginBottom: 20,
   },
   currency: {
     fontSize: 24,
@@ -206,6 +230,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
     fontFamily: 'Inter-Bold',
+  },
+  customTopUpButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#2563EB',
+    borderRadius: 12,
+    padding: 16,
+  },
+  customTopUpText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   topUpContainer: {
     backgroundColor: '#FFFFFF',
@@ -314,6 +353,11 @@ const styles = StyleSheet.create({
   transactionTime: {
     fontSize: 12,
     color: '#6B7280',
+    fontFamily: 'Inter-Regular',
+  },
+  transactionReference: {
+    fontSize: 10,
+    color: '#9CA3AF',
     fontFamily: 'Inter-Regular',
   },
   transactionAmount: {
