@@ -10,6 +10,8 @@ import PlanSwitcher from '@/components/PlanSwitcher';
 import ReferralCard from '@/components/ReferralCard';
 import PaystackPayment from '@/components/PaystackPayment';
 import { supabaseHelpers } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { DATA_PLAN_IDS } from '@/lib/constants';
 import { VPNConnection, UserPlan, ReferralData } from '@/types';
 import { Database } from '@/types/database';
 
