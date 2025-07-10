@@ -266,6 +266,13 @@ export default function HomeScreen() {
     pausedData: userPlan?.paused_data || 0,
   };
 
+  // Provide default values for profile if not loaded
+  const safeProfile = profile || {
+    wallet_balance: 0,
+    referral_code: 'LOADING...',
+    referral_earnings: 0,
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -294,7 +301,7 @@ export default function HomeScreen() {
         />
 
         <WalletCard
-          balance={profile.wallet_balance}
+          balance={safeProfile.wallet_balance}
           onTopUp={() => setShowPayment(true)}
           onBuyData={handleBuyData}
           onRefer={handleRefer}

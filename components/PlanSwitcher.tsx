@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Poppins-SemiBold',
     marginBottom: 16,
   },
   switcherContainer: {
@@ -111,13 +111,13 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 12,
     fontWeight: '600',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Poppins-SemiBold',
     marginTop: 4,
     textAlign: 'center',
   },
   planDescription: {
     fontSize: 10,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Poppins-Regular',
     marginTop: 2,
     textAlign: 'center',
   },
