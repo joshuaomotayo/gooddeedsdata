@@ -23,11 +23,10 @@ export const supabaseHelpers = {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
-      .single();
+      .eq('id', userId);
     
     if (error) throw error;
-    return data;
+    return data && data.length > 0 ? data[0] : null;
   },
 
   // Get user plan
