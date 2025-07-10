@@ -9,21 +9,27 @@ import WalletCard from '@/components/WalletCard';
 import PlanSwitcher from '@/components/PlanSwitcher';
 import ReferralCard from '@/components/ReferralCard';
 import PaystackPayment from '@/components/PaystackPayment';
-import { 
-  mockVPNConnection, 
-  mockWalletBalance, 
-  mockUsageRecords, 
-  mockUserPlan,
-  mockReferralData 
-} from '@/lib/mockData';
+import { supabaseHelpers } from '@/lib/supabase';
 import { VPNConnection, UserPlan, ReferralData } from '@/types';
+import { Database } from '@/types/database';
+
+type UserPlanData = Database['public']['Tables']['user_plans']['Row'] & {
+  current_plan: Database['public']['Tables']['data_plans']['Row'] | null;
+};
 
 export default function HomeScreen() {
-  const { user, loading } = useAuth();
-  const [connection, setConnection] = useState<VPNConnection>(mockVPNConnection);
-  const [walletBalance, setWalletBalance] = useState(mockWalletBalance);
-  const [userPlan, setUserPlan] = useState<UserPlan>(mockUserPlan);
-  const [referralData, setReferralData] = useState<ReferralData>(mockReferralData);
+  const { user, profile, loading } = useAuth();
+  const [connection, setConnection] = useState<VPNConnection>({
+    isConnected: false,
+    serverLocation: 'Lagos, Nigeria',
+    ipAddress: '197.149.89.42',
+    connectionTime: undefined,
+    dataUsed: 0,
+    speed: { download: 0, upload: 0 },
+  });
+  const [userPlan, setUserPlan] = useState<UserPlanData | null>(null);
+  const [referralData, setReferralData] = useState<ReferralData | null>(null);
+  const [usageRecords, setUsageRecords] = useState<any[]>([]);
   const [showPayment, setShowPayment] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
 
@@ -32,6 +38,12 @@ export default function HomeScreen() {
       router.replace('/auth/login');
     }
   }, [user, loading]);
+
+  useEffect(() => {
+    if (user && profile) {
+      loadUserData();
+    }
+  }, [user, profile]);
 
   // Simulate real-time updates when connected
   useEffect(() => {
@@ -50,6 +62,26 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [connection.isConnected]);
 
+  const loadUserData = async () => {
+    if (!user) return;
+
+    try {
+      // Load user plan
+      const planData = await supabaseHelpers.getUserPlan(user.id);
+      setUserPlan(planData);
+
+      // Load usage records
+      const usage = await supabaseHelpers.getUsageRecords(user.id, 10);
+      setUsageRecords(usage);
+
+      // Load referral data
+      const referrals = await supabaseHelpers.getReferralData(user.id);
+      setReferralData(referrals);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -60,20 +92,20 @@ export default function HomeScreen() {
     );
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return null;
   }
 
   // Calculate today's usage
   const today = new Date().toDateString();
-  const todayUsage = mockUsageRecords
+  const todayUsage = usageRecords
     .filter(record => new Date(record.timestamp).toDateString() === today)
     .reduce((total, record) => total + record.amount, 0);
 
-  const totalUsage = mockUsageRecords.reduce((total, record) => total + record.amount, 0);
-  const totalCost = mockUsageRecords.reduce((total, record) => total + (record.cost || 0), 0);
+  const totalUsage = usageRecords.reduce((total, record) => total + record.amount, 0);
+  const totalCost = usageRecords.reduce((total, record) => total + (record.cost || 0), 0);
 
-  const handleToggleConnection = () => {
+  const handleToggleConnection = async () => {
     if (connection.isConnected) {
       // Disconnect
       setConnection(prev => ({
@@ -86,12 +118,12 @@ export default function HomeScreen() {
       Alert.alert('Disconnected', 'You have been disconnected from GoodDeeds Data network.');
     } else {
       // Check if user has data or balance
-      if (userPlan.planType === 'payg' && walletBalance < 1) {
+      if (userPlan?.plan_type === 'payg' && profile.wallet_balance < 1) {
         Alert.alert('Insufficient Balance', 'Please top up your wallet to use Pay As You Go.');
         return;
       }
       
-      if (userPlan.planType !== 'payg' && userPlan.dataBalance <= 0) {
+      if (userPlan?.plan_type !== 'payg' && (userPlan?.data_balance || 0) <= 0) {
         Alert.alert('No Data', 'Please buy a data bundle or switch to Pay As You Go.');
         return;
       }
@@ -107,10 +139,10 @@ export default function HomeScreen() {
     }
   };
 
-  const handlePlanChange = (planType: 'free' | 'payg' | 'bundle') => {
-    if (planType === userPlan.planType) return;
+  const handlePlanChange = async (planType: 'free' | 'payg' | 'bundle') => {
+    if (!userPlan || planType === userPlan.plan_type) return;
 
-    if (planType === 'free' && userPlan.planType !== 'free') {
+    if (planType === 'free' && userPlan.plan_type !== 'free') {
       Alert.alert(
         'Cannot Switch to Free Plan',
         'Free plan is only available for new users for the first 30 days.'
@@ -118,68 +150,98 @@ export default function HomeScreen() {
       return;
     }
 
-    if (planType === 'payg') {
-      // Pause current data if switching from bundle
-      if (userPlan.planType === 'bundle' && userPlan.dataBalance > 0) {
-        setUserPlan(prev => ({
-          ...prev,
-          planType: 'payg',
-          pausedData: prev.dataBalance,
-          dataBalance: 0,
-        }));
-        Alert.alert(
-          'Switched to Pay As You Go',
-          `Your ${(userPlan.dataBalance / 1024).toFixed(1)}GB data has been paused. You can switch back anytime to continue using it.`
-        );
-      } else {
-        setUserPlan(prev => ({ ...prev, planType: 'payg' }));
+    try {
+      if (planType === 'payg') {
+        // Switch to Pay As You Go
+        const updates: any = { plan_type: 'payg' };
+        
+        if (userPlan.plan_type === 'bundle' && userPlan.data_balance > 0) {
+          updates.paused_data = userPlan.data_balance;
+          updates.data_balance = 0;
+        }
+
+        await supabase
+          .from('user_plans')
+          .update(updates)
+          .eq('user_id', user.id);
+
+        await loadUserData();
         Alert.alert('Switched to Pay As You Go', 'Data usage will now be charged from your wallet balance.');
+      } else if (planType === 'bundle') {
+        // Switch to bundle or restore paused data
+        if (userPlan.paused_data && userPlan.paused_data > 0) {
+          await supabase
+            .from('user_plans')
+            .update({
+              plan_type: 'bundle',
+              data_balance: userPlan.paused_data,
+              paused_data: 0,
+            })
+            .eq('user_id', user.id);
+
+          await loadUserData();
+          Alert.alert('Switched to Data Bundle', 'Your paused data has been restored.');
+        } else {
+          router.push('/(tabs)/plans');
+        }
       }
-    } else if (planType === 'bundle') {
-      // Restore paused data if available
-      if (userPlan.pausedData && userPlan.pausedData > 0) {
-        setUserPlan(prev => ({
-          ...prev,
-          planType: 'bundle',
-          dataBalance: prev.pausedData || 0,
-          pausedData: 0,
-        }));
-        Alert.alert(
-          'Switched to Data Bundle',
-          `Your paused ${((userPlan.pausedData || 0) / 1024).toFixed(1)}GB data has been restored.`
-        );
-      } else {
-        setUserPlan(prev => ({ ...prev, planType: 'bundle' }));
-        router.push('/(tabs)/plans');
-      }
+    } catch (error) {
+      console.error('Error switching plan:', error);
+      Alert.alert('Error', 'Failed to switch plan. Please try again.');
     }
   };
 
-  const handlePaymentSuccess = (amount: number, reference: string) => {
-    setWalletBalance(prev => prev + amount);
-    
-    // Add 2% to referrer if user was referred
-    if (user.referred_by) {
-      const referralEarning = amount * 0.02;
-      setReferralData(prev => ({
-        ...prev,
-        pendingEarnings: prev.pendingEarnings + referralEarning,
-        totalEarnings: prev.totalEarnings + referralEarning,
-      }));
+  const handlePaymentSuccess = async (amount: number, reference: string) => {
+    try {
+      // Add wallet transaction
+      await supabaseHelpers.addWalletTransaction(
+        user.id,
+        'credit',
+        amount,
+        'Wallet top-up via Paystack',
+        reference
+      );
+
+      // Reload user data to get updated balance
+      await loadUserData();
+      
+      Alert.alert(
+        'Payment Successful!',
+        `₦${amount.toFixed(2)} has been added to your wallet.`
+      );
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      Alert.alert('Error', 'Payment was successful but failed to update balance. Please contact support.');
     }
   };
 
-  const handleUseReferralEarnings = () => {
-    if (referralData.pendingEarnings > 0) {
-      setWalletBalance(prev => prev + referralData.pendingEarnings);
-      setReferralData(prev => ({
-        ...prev,
-        pendingEarnings: 0,
-      }));
+  const handleUseReferralEarnings = async () => {
+    if (!referralData || referralData.pendingEarnings <= 0) return;
+
+    try {
+      // Add referral earnings to wallet
+      await supabaseHelpers.addWalletTransaction(
+        user.id,
+        'credit',
+        referralData.pendingEarnings,
+        'Referral earnings added to wallet'
+      );
+
+      // Reset referral earnings
+      await supabase
+        .from('profiles')
+        .update({ referral_earnings: 0 })
+        .eq('id', user.id);
+
+      await loadUserData();
+      
       Alert.alert(
         'Earnings Added!',
         `₦${referralData.pendingEarnings.toFixed(2)} has been added to your wallet balance.`
       );
+    } catch (error) {
+      console.error('Error using referral earnings:', error);
+      Alert.alert('Error', 'Failed to add earnings to wallet. Please try again.');
     }
   };
 
@@ -191,6 +253,17 @@ export default function HomeScreen() {
     setShowReferral(!showReferral);
   };
 
+  // Convert userPlan to legacy UserPlan format for components
+  const legacyUserPlan: UserPlan = {
+    id: userPlan?.id || '',
+    userId: user.id,
+    planType: userPlan?.plan_type || 'free',
+    dataBalance: userPlan?.data_balance || 0,
+    expiryDate: userPlan?.expiry_date || undefined,
+    isActive: userPlan?.is_active || false,
+    pausedData: userPlan?.paused_data || 0,
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -200,7 +273,7 @@ export default function HomeScreen() {
         </View>
 
         <PlanSwitcher 
-          currentPlan={userPlan}
+          currentPlan={legacyUserPlan}
           onPlanChange={handlePlanChange}
         />
 
@@ -212,20 +285,20 @@ export default function HomeScreen() {
         <UsageCard
           todayUsage={todayUsage}
           totalUsage={totalUsage}
-          dailyLimit={userPlan.planType === 'free' ? 100 : undefined}
+          dailyLimit={userPlan?.plan_type === 'free' ? 100 : undefined}
           cost={totalCost}
-          dataBalance={userPlan.dataBalance}
-          planType={userPlan.planType}
+          dataBalance={userPlan?.data_balance || 0}
+          planType={userPlan?.plan_type || 'free'}
         />
 
         <WalletCard
-          balance={walletBalance}
+          balance={profile.wallet_balance}
           onTopUp={() => setShowPayment(true)}
           onBuyData={handleBuyData}
           onRefer={handleRefer}
         />
 
-        {showReferral && (
+        {showReferral && referralData && (
           <ReferralCard
             referralData={referralData}
             onUseEarnings={handleUseReferralEarnings}
