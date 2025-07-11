@@ -7,11 +7,12 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, resendConfirmation } = useAuth();
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !name) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -28,10 +29,24 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      await signUp(email, password);
-      router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create account');
+      await signUp(email, password, name);
+      Alert.alert(
+        'Check Your Email',
+        'We sent you a confirmation link. Please check your email and click the link to verify your account.',
+        [
+          {
+            text: 'Resend Email',
+            onPress: () => resendConfirmation(email),
+          },
+          {
+            text: 'OK',
+            onPress: () => router.replace('/auth/login'),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      Alert.alert('Error', error.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
@@ -45,11 +60,20 @@ export default function RegisterScreen() {
 
         <TextInput
           style={styles.input}
+          placeholder="Full Name"
+          value={name}
+          onChangeText={setName}
+          autoComplete="name"
+        />
+
+        <TextInput
+          style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
         />
 
         <TextInput
@@ -58,6 +82,7 @@ export default function RegisterScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          autoComplete="password-new"
         />
 
         <TextInput
@@ -66,6 +91,7 @@ export default function RegisterScreen() {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
+          autoComplete="password-new"
         />
 
         <TouchableOpacity
@@ -117,12 +143,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
     color: '#333',
+    fontFamily: 'Nunito-Bold',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
     color: '#666',
+    fontFamily: 'Nunito-Regular',
   },
   input: {
     borderWidth: 1,
@@ -131,6 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
+    fontFamily: 'Nunito-Regular',
   },
   button: {
     backgroundColor: '#007AFF',
@@ -146,6 +175,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Nunito-SemiBold',
   },
   footer: {
     flexDirection: 'row',
@@ -154,9 +184,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: '#666',
+    fontFamily: 'Nunito-Regular',
   },
   link: {
     color: '#007AFF',
     fontWeight: '600',
+    fontFamily: 'Nunito-SemiBold',
   },
 });

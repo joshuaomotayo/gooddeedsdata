@@ -19,8 +19,9 @@ export default function LoginScreen() {
     try {
       await signIn(email, password);
       router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert('Error', 'Invalid credentials');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert('Error', error.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -39,6 +40,7 @@ export default function LoginScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
         />
 
         <TextInput
@@ -47,6 +49,7 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          autoComplete="password"
         />
 
         <TouchableOpacity
@@ -98,12 +101,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
     color: '#333',
+    fontFamily: 'Nunito-Bold',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
     color: '#666',
+    fontFamily: 'Nunito-Regular',
   },
   input: {
     borderWidth: 1,
@@ -112,6 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
+    fontFamily: 'Nunito-Regular',
   },
   button: {
     backgroundColor: '#007AFF',
@@ -127,6 +133,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Nunito-SemiBold',
   },
   footer: {
     flexDirection: 'row',
@@ -135,9 +142,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: '#666',
+    fontFamily: 'Nunito-Regular',
   },
   link: {
     color: '#007AFF',
     fontWeight: '600',
+    fontFamily: 'Nunito-SemiBold',
   },
 });

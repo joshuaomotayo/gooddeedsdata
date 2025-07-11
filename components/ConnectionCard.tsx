@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
   toggleButton: {
     paddingHorizontal: 20,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
   connectionDetails: {
     gap: 12,
@@ -142,18 +142,18 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: '#374151',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   detailLabel: {
     fontSize: 14,
     color: '#6B7280',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   detailValue: {
     fontSize: 14,
     color: '#374151',
     fontWeight: '500',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Nunito-Medium',
   },
   speedContainer: {
     flexDirection: 'row',
@@ -174,12 +174,12 @@ const styles = StyleSheet.create({
   speedLabel: {
     fontSize: 12,
     color: '#6B7280',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   speedValue: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
 });

@@ -13,6 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  resendConfirmation: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,9 +35,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
+        if (event === 'SIGNED_UP') {
+          // Create profile and user plan for new users
+          try {
+            await supabaseHelpers.createUserProfile(
+              session.user.id, 
+              session.user.email!, 
+              session.user.user_metadata?.name
+            );
+            await supabaseHelpers.createUserPlan(session.user.id);
+          } catch (error) {
+            console.error('Error creating user profile/plan:', error);
+          }
+        }
         await loadUserProfile(session.user.id);
       } else {
         setProfile(null);
@@ -53,7 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(profileData);
     } catch (error) {
       console.error('Error loading profile:', error);
-      // Don't throw error, just set profile to null and continue
       setProfile(null);
     } finally {
       setLoading(false);
@@ -76,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           name: name || '',
         },
-        emailRedirectTo: undefined, // Disable email confirmation for now
+        emailRedirectTo: undefined, // Enable email confirmation
       },
     });
     if (error) throw error;
@@ -102,6 +117,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await loadUserProfile(user.id);
   };
 
+  const resendConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    if (error) throw error;
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -110,7 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn, 
       signUp, 
       signOut, 
-      updateProfile 
+      updateProfile,
+      resendConfirmation
     }}>
       {children}
     </AuthContext.Provider>

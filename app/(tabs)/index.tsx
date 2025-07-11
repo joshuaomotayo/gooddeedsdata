@@ -11,7 +11,6 @@ import ReferralCard from '@/components/ReferralCard';
 import PaystackPayment from '@/components/PaystackPayment';
 import { supabaseHelpers } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
-import { DATA_PLAN_IDS } from '@/lib/constants';
 import { VPNConnection, UserPlan, ReferralData } from '@/types';
 import { Database } from '@/types/database';
 
@@ -34,6 +33,7 @@ export default function HomeScreen() {
   const [usageRecords, setUsageRecords] = useState<any[]>([]);
   const [showPayment, setShowPayment] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -67,6 +67,7 @@ export default function HomeScreen() {
   const loadUserData = async () => {
     if (!user) return;
 
+    setDataLoading(true);
     try {
       // Load user plan
       const planData = await supabaseHelpers.getUserPlan(user.id);
@@ -81,10 +82,13 @@ export default function HomeScreen() {
       setReferralData(referrals);
     } catch (error) {
       console.error('Error loading user data:', error);
+      Alert.alert('Error', 'Failed to load user data. Please try again.');
+    } finally {
+      setDataLoading(false);
     }
   };
 
-  if (loading) {
+  if (loading || dataLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -95,7 +99,13 @@ export default function HomeScreen() {
   }
 
   if (!user || !profile) {
-    return null;
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Please log in to continue</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   // Calculate today's usage
@@ -344,7 +354,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#6B7280',
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   header: {
     padding: 20,
@@ -354,13 +364,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#111827',
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Nunito-Bold',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   footer: {
     padding: 20,
@@ -370,6 +380,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'center',
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Nunito-Regular',
   },
 });

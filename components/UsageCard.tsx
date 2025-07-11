@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
     flex: 1,
   },
   planBadge: {
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '600',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
   dataBalanceContainer: {
     flexDirection: 'row',
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#7C3AED',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -195,13 +195,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Nunito-Bold',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
     color: '#6B7280',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   progressContainer: {
     marginBottom: 16,
@@ -215,12 +215,12 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 14,
     color: '#374151',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Nunito-Medium',
   },
   progressText: {
     fontSize: 12,
     color: '#6B7280',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   progressBar: {
     height: 8,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   percentageText: {
     fontSize: 12,
     textAlign: 'right',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Nunito-Medium',
   },
   trendContainer: {
     flexDirection: 'row',
@@ -246,6 +246,6 @@ const styles = StyleSheet.create({
   trendText: {
     fontSize: 12,
     color: '#059669',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Nunito-Medium',
   },
 });

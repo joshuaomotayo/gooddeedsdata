@@ -25,8 +25,30 @@ export const supabaseHelpers = {
       .select('*')
       .eq('id', userId);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
     return data && data.length > 0 ? data[0] : null;
+  },
+
+  // Create user profile
+  async createUserProfile(userId: string, email: string, name?: string) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        email,
+        name: name || '',
+        referral_code: `GDD${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        wallet_balance: 0,
+        referral_earnings: 0,
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   },
 
   // Get user plan
@@ -38,6 +60,26 @@ export const supabaseHelpers = {
         current_plan:data_plans(*)
       `)
       .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching user plan:', error);
+      return null;
+    }
+    return data;
+  },
+
+  // Create initial user plan
+  async createUserPlan(userId: string) {
+    const { data, error } = await supabase
+      .from('user_plans')
+      .insert({
+        user_id: userId,
+        plan_type: 'free',
+        data_balance: 3072, // 3GB free
+        expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select()
       .single();
     
     if (error) throw error;
@@ -53,7 +95,7 @@ export const supabaseHelpers = {
       .order('price');
     
     if (error) throw error;
-    return data;
+    return data || [];
   },
 
   // Get usage records
@@ -66,7 +108,7 @@ export const supabaseHelpers = {
       .limit(limit);
     
     if (error) throw error;
-    return data;
+    return data || [];
   },
 
   // Get wallet transactions
@@ -79,7 +121,7 @@ export const supabaseHelpers = {
       .limit(limit);
     
     if (error) throw error;
-    return data;
+    return data || [];
   },
 
   // Add wallet transaction
@@ -127,7 +169,7 @@ export const supabaseHelpers = {
       .order('name');
     
     if (error) throw error;
-    return data;
+    return data || [];
   },
 
   // Get referral data
@@ -138,20 +180,30 @@ export const supabaseHelpers = {
       .eq('id', userId)
       .single();
     
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Error fetching referral profile:', profileError);
+      return {
+        code: 'LOADING...',
+        totalReferrals: 0,
+        totalEarnings: 0,
+        pendingEarnings: 0
+      };
+    }
 
     const { data: referrals, error: referralsError } = await supabase
       .from('referrals')
       .select('*')
       .eq('referrer_id', userId);
     
-    if (referralsError) throw referralsError;
+    if (referralsError) {
+      console.error('Error fetching referrals:', referralsError);
+    }
 
     return {
-      code: profile.referral_code,
-      totalReferrals: referrals.length,
-      totalEarnings: referrals.reduce((sum, ref) => sum + Number(ref.earnings_total), 0),
-      pendingEarnings: Number(profile.referral_earnings)
+      code: profile.referral_code || 'LOADING...',
+      totalReferrals: referrals?.length || 0,
+      totalEarnings: referrals?.reduce((sum, ref) => sum + Number(ref.earnings_total), 0) || 0,
+      pendingEarnings: Number(profile.referral_earnings) || 0
     };
   }
 };

@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
   topUpButton: {
     flexDirection: 'row',
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
   },
   balanceContainer: {
     flexDirection: 'row',
@@ -106,14 +106,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: '#6B7280',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Nunito-SemiBold',
     marginRight: 4,
   },
   balance: {
     fontSize: 36,
     fontWeight: '700',
     color: '#111827',
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Nunito-Bold',
   },
   quickActions: {
     flexDirection: 'row',
@@ -133,6 +133,6 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 12,
     color: '#374151',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Nunito-Medium',
   },
 });
