@@ -143,7 +143,7 @@ export default function ProfileScreen() {
                 <Calendar size={16} color="#6B7280" strokeWidth={2} />
                 <Text style={styles.contactText}>
                   Member since {user?.created_at ? formatDate(user.created_at) : 'Recently'}
-                Member since {user?.created_at ? formatDate(user.created_at) : 'Recently'}
+                </Text>
               </View>
             </View>
           </View>
