@@ -44,8 +44,32 @@ export default function HomeScreen() {
   useEffect(() => {
     if (user && profile) {
       loadUserData();
+    } else if (user && !profile && !loading) {
+      // User exists but no profile, create one
+      createUserProfileAndPlan();
     }
-  }, [user, profile]);
+  }, [user, profile, loading]);
+
+  const createUserProfileAndPlan = async () => {
+    if (!user) return;
+
+    try {
+      // Create profile
+      await supabaseHelpers.createUserProfile(
+        user.id,
+        user.email!,
+        user.user_metadata?.name
+      );
+      
+      // Create user plan
+      await supabaseHelpers.createUserPlan(user.id);
+      
+      // Reload data
+      await loadUserData();
+    } catch (error) {
+      console.error('Error creating user profile/plan:', error);
+    }
+  };
 
   // Simulate real-time updates when connected
   useEffect(() => {

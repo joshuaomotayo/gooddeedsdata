@@ -16,9 +16,19 @@ export default function ProfileScreen() {
   };
 
   const handleSaveProfile = () => {
-    // In a real app, this would update the user profile via API
-    Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
-    setShowEditProfile(false);
+    if (!user) return;
+    
+    // Update profile via Supabase
+    supabaseHelpers.updateProfile(user.id, {
+      name: editedName,
+      phone: editedPhone,
+    }).then(() => {
+      Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
+      setShowEditProfile(false);
+    }).catch((error) => {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    });
   };
 
   const handleSettings = () => {

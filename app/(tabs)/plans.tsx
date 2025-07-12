@@ -88,7 +88,7 @@ export default function PlansScreen() {
       );
 
       // Update user plan
-      await supabase
+      const { error: updateError } = await supabase
         .from('user_plans')
         .update({
           plan_type: 'bundle',
@@ -97,6 +97,8 @@ export default function PlansScreen() {
           expiry_date: new Date(Date.now() + selectedPlan.validity * 24 * 60 * 60 * 1000).toISOString(),
         })
         .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
 
       Alert.alert(
         'Purchase Successful!',

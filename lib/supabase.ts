@@ -23,13 +23,17 @@ export const supabaseHelpers = {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId);
+      .eq('id', userId)
+      .single();
     
     if (error) {
-      console.error('Error fetching profile:', error);
-      return null;
+      if (error.code === 'PGRST116') {
+        // No profile found, return null
+        return null;
+      }
+      throw error;
     }
-    return data && data.length > 0 ? data[0] : null;
+    return data;
   },
 
   // Create user profile
@@ -205,5 +209,18 @@ export const supabaseHelpers = {
       totalEarnings: referrals?.reduce((sum, ref) => sum + Number(ref.earnings_total), 0) || 0,
       pendingEarnings: Number(profile.referral_earnings) || 0
     };
+  },
+
+  // Update user profile
+  async updateProfile(userId: string, updates: { name?: string; phone?: string }) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 };
