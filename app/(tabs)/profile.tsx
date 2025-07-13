@@ -142,12 +142,12 @@ export default function ProfileScreen() {
                 <Text style={styles.contactText}>{user?.email}</Text>
               </View>
               
-              {user?.phone && (
+              {user?.phone ? (
                 <View style={styles.contactItem}>
                   <Phone size={16} color="#6B7280" strokeWidth={2} />
                   <Text style={styles.contactText}>{user.phone}</Text>
                 </View>
-              )}
+              ) : null}
               
               <View style={styles.contactItem}>
                 <Calendar size={16} color="#6B7280" strokeWidth={2} />

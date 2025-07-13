@@ -65,19 +65,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const profileData = await supabaseHelpers.getUserProfile(userId);
+      // Create profile (will check if exists first)
       setProfile(profileData);
     } catch (error) {
       if (error.code === 'PGRST116') {
         // No profile exists yet, this is normal for new users
         console.log('No profile found for user, will be created on first interaction');
-        setProfile(null);
+      // Create user plan (will check if exists first)
       } else {
         console.error('Error loading profile:', error);
         setProfile(null);
       }
     } finally {
       setLoading(false);
+      // Don't throw error, just log it - user can still use the app
     }
   };
 

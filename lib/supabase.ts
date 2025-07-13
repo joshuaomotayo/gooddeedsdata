@@ -38,15 +38,18 @@ export const supabaseHelpers = {
 
   // Create user profile
   async createUserProfile(userId: string, email: string, name?: string) {
+    // First check if profile already exists
+    const existingProfile = await this.getUserProfile(userId);
+    if (existingProfile) {
+      return existingProfile;
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .insert({
         id: userId,
         email,
         name: name || '',
-        referral_code: `GDD${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        wallet_balance: 0,
-        referral_earnings: 0,
       })
       .select()
       .single();
@@ -57,6 +60,43 @@ export const supabaseHelpers = {
 
   // Get user plan
   async getUserPlan(userId: string) {
+    // First check if user plan exists, if not create it
+    let { data, error } = await supabase
+      .from('user_plans')
+      .select(`
+        *,
+        current_plan:data_plans(*)
+      `)
+      .eq('user_id', userId)
+      .single();
+    
+    if (error && error.code === 'PGRST116') {
+      // No plan exists, create one
+      await this.createUserPlan(userId);
+      // Try again
+      const result = await supabase
+        .from('user_plans')
+        .select(`
+          *,
+          current_plan:data_plans(*)
+        `)
+        .eq('user_id', userId)
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
+    
+    if (error) {
+      console.error('Error fetching user plan:', error);
+      return null;
+    }
+    return data;
+  },
+
+  // Create initial user plan (updated)
+  async createUserPlan(userId: string) {
+    // Check if plan already exists
     const { data, error } = await supabase
       .from('user_plans')
       .select(`
@@ -66,16 +106,13 @@ export const supabaseHelpers = {
       .eq('user_id', userId)
       .single();
     
-    if (error) {
-      console.error('Error fetching user plan:', error);
-      return null;
+    if (!error) {
+      // Plan already exists
+      return data;
     }
-    return data;
-  },
 
-  // Create initial user plan
-  async createUserPlan(userId: string) {
-    const { data, error } = await supabase
+    // Create new plan
+    const { data: newPlan, error: createError } = await supabase
       .from('user_plans')
       .insert({
         user_id: userId,
@@ -86,8 +123,8 @@ export const supabaseHelpers = {
       .select()
       .single();
     
-    if (error) throw error;
-    return data;
+    if (createError) throw createError;
+    return newPlan;
   },
 
   // Get data plans
