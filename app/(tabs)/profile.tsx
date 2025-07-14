@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, TextInput, Modal, Switch, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,11 @@ export default function ProfileScreen() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
   const [editedPhone, setEditedPhone] = useState('');
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [isDarkModeEnabled, setIsDarkModeEnabled] = useState<boolean>(false);
+  const [receivesMarketingEmails, setReceivesMarketingEmails] = useState<boolean>(false);
+  const [receivesSessionAlerts, setReceivesSessionAlerts] = useState<boolean>(true);
+  const [receivesPaymentNotifications, setReceivesPaymentNotifications] = useState<boolean>(true);
 
   const handleEditProfile = () => {
     setShowEditProfile(true);
@@ -31,29 +36,12 @@ export default function ProfileScreen() {
     });
   };
 
-  const handleSettings = () => {
-    Alert.alert('Settings', 'Settings page coming soon!');
-  };
-
-  const handleHelp = () => {
-    Alert.alert(
-      'Help & Support',
-      'Need help? Contact us:\n\n📧 support@gooddeeds.com\n📱 +234 800 GOODDEEDS\n💬 Live chat available 24/7'
-    );
-  };
-
-  const handlePrivacy = () => {
-    Alert.alert(
-      'Privacy & Security',
-      'Your data is protected with:\n\n• End-to-end encryption\n• Secure payment processing\n• No data logging policy\n• GDPR compliance'
-    );
-  };
-
-  const handleNotifications = () => {
-    Alert.alert(
-      'Notifications',
-      'Manage your notifications:\n\n• Data usage alerts\n• Payment confirmations\n• Referral earnings\n• System updates'
-    );
+  const handleMenuPress = (sectionTitle: string) => {
+    if (expandedSection === sectionTitle) {
+      setExpandedSection(null); // Collapse if already expanded
+    } else {
+      setExpandedSection(sectionTitle); // Expand the pressed section
+    }
   };
 
   const handleLogout = () => {
@@ -88,25 +76,25 @@ export default function ProfileScreen() {
       icon: Settings,
       title: 'Settings',
       subtitle: 'App preferences and configuration',
-      onPress: handleSettings,
+      onPress: () => handleMenuPress('Settings'),
     },
     {
       icon: Bell,
       title: 'Notifications',
       subtitle: 'Manage your notification preferences',
-      onPress: handleNotifications,
+      onPress: () => handleMenuPress('Notifications'),
     },
     {
       icon: Shield,
       title: 'Privacy & Security',
       subtitle: 'Control your privacy settings',
-      onPress: handlePrivacy,
+      onPress: () => handleMenuPress('Privacy & Security'),
     },
     {
       icon: HelpCircle,
       title: 'Help & Support',
       subtitle: 'Get help and contact support',
-      onPress: handleHelp,
+      onPress: () => handleMenuPress('Help & Support'),
     },
   ];
 
@@ -197,7 +185,99 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Logout Button */}
+        {/* Expanded Section Content */}
+        {expandedSection === 'Settings' && (
+          <View style={styles.expandedContent}>
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Enable Dark Mode</Text>
+              <Switch
+                value={isDarkModeEnabled}
+                onValueChange={setIsDarkModeEnabled}
+              />
+            </View>
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Receive Marketing Emails</Text>
+              <Switch
+                value={receivesMarketingEmails}
+                onValueChange={setReceivesMarketingEmails}
+              />
+            </View>
+          </View>
+        )}
+        {expandedSection === 'Notifications' && (
+          <View style={styles.expandedContent}>
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>New Session Alerts</Text>
+              <Switch
+                value={receivesSessionAlerts}
+                onValueChange={setReceivesSessionAlerts}
+              />
+            </View>
+             <View style={styles.settingItem}>
+ <Text style={styles.settingLabel}>Payment Notifications</Text>
+              <Switch
+                value={false} // Placeholder value
+                onValueChange={() => {}} // Placeholder handler
+              />
+            </View>
+          </View>
+        )}
+        {expandedSection === 'Privacy & Security' && (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.expandedContent}
+          >
+            <Text style={styles.sectionTitle}>Change Password</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Current Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your current password"
+                secureTextEntry
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>New Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your new password"
+                secureTextEntry
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Confirm New Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm your new password"
+                secureTextEntry
+              />
+            </View>
+            <TouchableOpacity style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>Change Password</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        )}
+        {expandedSection === 'Privacy & Security' && (
+          // Note: There was a duplicate Privacy & Security section rendering.
+          // This second block is being removed to prevent that.
+          // If you intended to have different content here, please clarify.
+          null
+        )}
+        {expandedSection === 'Help & Support' && (
+          <View style={styles.expandedContent}>
+            <Text style={styles.sectionTitle}>Get in Touch</Text>
+            <TouchableOpacity style={styles.helpSupportButton}>
+              <Text style={styles.helpButtonText}>Visit Help Center</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.helpSupportButton}>
+              <Text style={styles.helpButtonText}>Email Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.helpSupportButton}>
+              <Text style={styles.helpButtonText}>WhatsApp Support</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <LogOut size={20} color="#DC2626" strokeWidth={2} />
           <Text style={styles.logoutText}>Logout</Text>
@@ -501,4 +581,108 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'Inter-Bold',
   },
+  expandedContent: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+ },
+ helpSupportButton: {
+    backgroundColor: '#2563EB',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 10, // Added spacing between buttons
+    marginHorizontal: 20, // Added horizontal margin for consistency
+    },
+
+ privacyText: {
+    fontSize: 14,
+    color: '#374151',
+    fontFamily: 'Inter-Regular',
+    marginBottom: 15,
+  },
+  managePermissionsButton: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  contactInfoText: {
+    fontSize: 14,
+    color: '#374151',
+    fontFamily: 'Inter-Regular',
+    marginBottom: 8,
+ },
+ settingItem: {
+ flexDirection: 'row',
+ alignItems: 'center',
+ justifyContent: 'space-between',
+ paddingVertical: 10,
+ borderBottomWidth: 1,
+ borderBottomColor: '#F3F4F6',
+  },
+  settingLabel: {
+    fontSize: 16,
+    color: '#111827',
+    fontFamily: 'Inter-Regular',
+  },
+  togglePlaceholder: {
+    width: 40,
+    height: 20,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 15,
+  },
+  contactOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    gap: 12,
+  },
+  contactOptionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    fontFamily: 'Inter-Medium',
+  },
+  contactOptionSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontFamily: 'Inter-Regular',
+  },
+  whatsappIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#25D366', // WhatsApp green color
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  whatsappIcon: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  helpButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+ },
 });
